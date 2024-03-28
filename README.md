@@ -1,17 +1,17 @@
 # Objective
 
-My objective was to develop a aws lambda funtion to process the given "test-data" by implementing all the contraints and dependancies mentioned in the problem statement. 
+My objective was to develop an aws lambda funtion to process the given "test-data" by implementing all the contraints and dependancies mentioned in the problem statement. 
 
 # Solution
 
-The solution was implemted using serverless approach. I used one S3 bucket, One Lambda function, 4 SQS queues for four types of files, and three DynamoDB tables.
+The solution was implemted using serverless approach. I used 1 S3 bucket, 1 Lambda function, 4 SQS queues for four types of files, and three DynamoDB tables.
 
 # Steps to verify my lambda_funtion
 
 My code can be tested with AWS Lambda's inbuild functionality. The Test event is provided below.  
 
 Create follwing three DynamoDB tables with default configs:
-Table name "customerstb" with id(string) as primary key.
+Table name "customerstb" with id(string) as primary key. GSI with name as EmailIndex and partion key as email(string).
 Table name "products" with sku(string) as primary key.
 Table "transactions" with transactions_id(string) as primary key.
 
