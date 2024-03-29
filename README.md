@@ -8,14 +8,15 @@ The solution was implemted using serverless approach. I used 1 S3 bucket, 1 Lamb
 
 # Steps to verify my lambda_funtion
 
-My code can be tested with AWS Lambda's inbuild functionality. The Test event is provided below.  
+My code can be tested with AWS Lambda's inbuild functionality. The Test event is provided below. 
+I have also created multiple Test events and saved them in AWS Lambda.
 
-Create follwing three DynamoDB tables with default configs:
+I created follwing three DynamoDB tables with default configs:
 Table name "customerstb" with id(string) as primary key. GSI with name as EmailIndex and partion key as email(string).
 Table name "products" with sku(string) as primary key.
 Table "transactions" with transactions_id(string) as primary key.
 
-Test event json for lambda funtion:
+**Test event** json for lambda funtion test:
 Replace the text in bold with your s3 bucket and object to process the test data.
 
 {
