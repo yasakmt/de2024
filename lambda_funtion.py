@@ -108,7 +108,6 @@ def update_customer_fields(customer_id=None, email=None):
     key = None
     original_item = {}
 
-
     if customer_id:
         key = {'id': customer_id}
         try:
@@ -167,8 +166,7 @@ def lambda_handler(event, context):
         'customers': 'customerstb',
         'transactions':'transactions',
         'products' : 'products',
-        'erasure-requests':'customerstb'
-        # Add other mappings as needed
+        'erasure-requests':'customerstb',
     }
     logger.info("Event: " + json.dumps(event))
 
@@ -184,8 +182,9 @@ def lambda_handler(event, context):
             print(f"Object Key: {key}")
 
     file_prefix = key.split('/')[-1].split('.')[0]
-    print(f"Processing: {file_prefix}")
     table_name = table_mappings.get(file_prefix)
+    print(f"Processing: {file_prefix} for {table_name}")
+
 
     if not table_name:
         print(f"No table mapping found for file: {key}")
@@ -205,7 +204,7 @@ def lambda_handler(event, context):
         print("Unsupported file format")
         return
 
-    print("received json file for" +" "+ table_name)
+    print(f"received json file: {file_prefix} for table {table_name}" )
 
     valid_records = []
     required_fields_cust = ['id', 'first_name', 'last_name', 'email']
@@ -224,16 +223,16 @@ def lambda_handler(event, context):
                 # Checking if all required fields are present and not empty
                 print("Checking if all required fields are present in the record and not empty")
                 if table_name == "customerstb" and  all(record.get(field) for field in required_fields_cust):
-                    if not any(record["id"] == r["id"] for r in valid_records) in primary_key_cache['customerstb']:
+                    if not any(record["id"] == r["id"] for r in valid_records) and record["id"] not in primary_key_cache['customerstb']:
                         valid_records.append(record)
                     else:
-                        print(f"duplicate id in the json record: {record}" )
+                        print(f"Duplicate id in the json record or id already exist in the table: {record}" )
 
                 elif table_name == "transactions" and all(record.get(field) for field in required_fields_tranx) and validate_total_cost(record):
                     if not any(record["transaction_id"] == r["transaction_id"] for r in valid_records) and record["customer_id"] in primary_key_cache['customerstb']:
                         valid_records.append(record)
                     else:
-                        print(f"duplicate record, or record not valid, or customer id not in exist incustomers table: {record}")
+                        print(f"Duplicate record, or record not valid, or customer id not exist in customers table: {record}")
 
 
                 elif table_name == "products" and all(record.get(field) for field in required_fields_products) and validate_products_record(record):
@@ -245,18 +244,11 @@ def lambda_handler(event, context):
                          valid_records.append(updated_record)
 
 
-                elif table_name == "customerstb" and any(record.get(field) for field in required_fields_erasure):
+                elif file_prefix == "erasure-requests" and any(record.get(field) for field in required_fields_erasure):
                          print("Processing Erasure dataset to update the records in 'customerstb' table in dynamodb")
+                          # Assuming the key name 'customer-id' is always consistent.
                          valid_records.append(record)
-                         for record in valid_records:
-                            if 'customer-id' in record:
-                              # Renaming 'customer-id' to 'id'
-                              print("Renaming 'customer-id' to 'id' to check if the customer id is in the existing table and to anonymize PII fields")
-                              record['id'] = record.pop('customer-id')
-                              customer_id = record.get('id')
-                              email = record.get('email')
-                              response = update_customer_fields(customer_id=customer_id, email=email)
-                              print(response)
+
                 else:
                     print("Record missing required fields or contains empty values. Skipping record.")
 
@@ -266,17 +258,31 @@ def lambda_handler(event, context):
 
 
     if file_prefix!="erasure-requests":
-
+        print(f"Final step for processing valid records in {file_prefix}")
         for record in valid_records:
-
             try:
                 table.put_item(Item=record)
                 print(f"Inserted following record: {record} in {table_name}")
             except Exception as e:
                 print(f"Error inserting item: {e}")
 
-    else:
-        print("Erasure-request processed successfully")
+    elif file_prefix == 'erasure-requests':
+        print(f"Checking records for availability of customer-id or email to complete the final steps in processing {file_prefix}")
+        for record in valid_records:
+          email = record.get('email')
+
+          if 'customer-id' in record:
+              record['id'] = record.pop('customer-id')
+              customer_id = record.get('id')
+              print(f"Processing the record in erasure-requests file for customer_id: {customer_id}")
+              print(update_customer_fields(customer_id=customer_id, email=None))
+          elif email:
+              print(f"customer-id not found in the record. But the record have 'email' hence processing the record to anonymize all the PII fields including {email}")
+              print(update_customer_fields(customer_id=None, email=email))
+
+          else:
+            print(f"'cusotmer-id' and 'email' not found in the record: {record}")
+
 
     return {
         'statusCode': 200,
