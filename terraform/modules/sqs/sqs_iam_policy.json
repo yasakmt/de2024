@@ -1,0 +1,29 @@
+{
+  "Version": "2012-10-17",
+  "Id": "__default_policy_ID",
+  "Statement": [
+    {
+      "Sid": "__owner_statement",
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": "arn:aws:iam::${aws_account_id}:root"
+      },
+      "Action": "SQS:*",
+      "Resource": "arn:aws:sqs:${aws_region}:${aws_account_id}:${sqs_queue_name}"
+    },
+    {
+      "Sid": "AllowS3ToSend",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "s3.amazonaws.com"
+      },
+      "Action": "SQS:SendMessage",
+      "Resource": "arn:aws:sqs:${aws_region}:${aws_account_id}:${sqs_queue_name}",
+      "Condition": {
+        "ArnLike": {
+          "aws:SourceArn": "arn:aws:s3:::yasa-de-us-east-01"
+        }
+      }
+    }
+  ]
+}

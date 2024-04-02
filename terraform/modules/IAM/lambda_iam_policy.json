@@ -1,0 +1,49 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "sqs:ReceiveMessage",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes"
+      ],
+      "Resource": [
+        "arn:aws:sqs:${aws_region}:${aws_account_id}:${sqs_queue_name}",
+        "arn:aws:sqs:${aws_region}:${aws_account_id}:${sqs_transactions_queue_name}",
+        "arn:aws:sqs:${aws_region}:${aws_account_id}:${sqs_products_queue_name}",
+        "arn:aws:sqs:${aws_region}:${aws_account_id}:${sqs_erasure_requests_queue_name}"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::${s3_bucket_name}",
+        "arn:aws:s3:::${s3_bucket_name}/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:Query",
+        "dynamodb:UpdateItem",
+        "dynamodb:PutItem",
+        "dynamodb:DeleteItem"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:${aws_region}:${aws_account_id}:table/customers",
+        "arn:aws:dynamodb:${aws_region}:${aws_account_id}:table/transactions",
+        "arn:aws:dynamodb:${aws_region}:${aws_account_id}:table/products"
+      ]
+    }
+
+
+
+  ]
+}
